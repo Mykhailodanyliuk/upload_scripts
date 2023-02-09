@@ -37,8 +37,8 @@ def get_all_data_from_collection(collection):
     return results
 
 def upload_sec_tickers_data():
-    update_collection = get_collection_from_db('db', 'update_collection')
-    sec_tickers_data_collection = get_collection_from_db('db', 'sec_data_tickers')
+    update_collection = get_collection_from_db('db', 'update_collection1')
+    sec_tickers_data_collection = get_collection_from_db('db', 'sec_data_tickers1')
     last_len_records = sec_tickers_data_collection.count_documents({})
     while True:
         try:
@@ -72,10 +72,10 @@ def upload_sec_tickers_data():
 
 
 def upload_sec_fillings_data():
-    sec_data_collection = get_collection_from_db('db', 'sec_data')
-    update_collection = get_collection_from_db('db', 'update_collection')
-    path_to_zip = 'G:/Programming/workProject/submissions.zip'
-    path_to_data_directory = 'G:/Programming/workProject/submissions'
+    sec_data_collection = get_collection_from_db('db', 'sec_data1')
+    update_collection = get_collection_from_db('db', 'update_collection1')
+    path_to_zip = '/home/dev/submissions.zip'
+    path_to_data_directory = '/home/dev/submissions'
     download_file('https://www.sec.gov/Archives/edgar/daily-index/bulkdata/submissions.zip', path_to_zip)
     last_len_records = sec_data_collection.count_documents({})
     existed_ciks = sec_data_collection.distinct('cik')

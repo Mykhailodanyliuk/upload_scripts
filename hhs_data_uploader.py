@@ -220,13 +220,13 @@ headers = ['NPI', 'Entity Type Code', 'Replacement NPI', 'Employer Identificatio
 headers = [header.lower().replace(' ','_').replace(')','_').replace('(','_') for header in headers]
 
 def upload_hhs_data():
-    update_collection = get_collection_from_db('db', 'update_collection')
-    nppes_data_individual_collection = get_collection_from_db('db', 'nppes_data_individual')
-    nppes_data_entities_collection = get_collection_from_db('db', 'nppes_data_entities')
-    path_to_zip = 'G:/Programming/workProject/NPPES_Data_Dissemination_January_2023.zip'
-    path_to_data_directory = 'G:/Programming/workProject/NPPES_Data_Dissemination_January_2023'
+    update_collection = get_collection_from_db('db', 'update_collection1')
+    nppes_data_individual_collection = get_collection_from_db('db', 'nppes_data_individual1')
+    nppes_data_entities_collection = get_collection_from_db('db', 'nppes_data_entities1')
+    path_to_zip = '/home/dev/NPPES_Data_Dissemination_January_2023.zip'
+    path_to_data_directory = '/home/dev/NPPES_Data_Dissemination_January_2023'
     file_to_download = 'https://download.cms.gov/nppes/NPPES_Data_Dissemination_January_2023.zip'
-    download_file('https://download.cms.gov/nppes/NPPES_Data_Dissemination_January_2023.zip', 'NPPES_Data_Dissemination_January_2023.zip')
+    download_file('https://download.cms.gov/nppes/NPPES_Data_Dissemination_January_2023.zip', '/home/dev/NPPES_Data_Dissemination_January_2023.zip')
     existed_npi_individual = nppes_data_individual_collection.distinct('npi')
     existed_npi_entities = nppes_data_entities_collection.distinct('npi')
     last_len_npi_individual_records = len(existed_npi_individual)

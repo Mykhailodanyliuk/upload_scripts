@@ -56,12 +56,12 @@ def extract_zip_file(file_path, destination_path):
 
 
 def upload_clinical_trials():
-    clinical_trials_collection = get_collection_from_db('db', 'clinical_trials')
-    organizations_collection = get_collection_from_db('db', 'clinical_trials_organizations')
-    update_collection = get_collection_from_db('db', 'update_collection')
-    path_to_zip = 'G:/Programming/workProject/AllAPIJSON.zip'
-    path_to_data_directory = 'G:/Programming/workProject/AllAPIJSON'
-    download_file('https://ClinicalTrials.gov/AllAPIJSON.zip', 'AllAPIJSON.zip')
+    clinical_trials_collection = get_collection_from_db('db', 'clinical_trials1')
+    organizations_collection = get_collection_from_db('db', 'clinical_trials_organizations1')
+    update_collection = get_collection_from_db('db', 'update_collection1')
+    path_to_zip = '/home/dev/AllAPIJSON.zip'
+    path_to_data_directory = '/home/devAllAPIJSON'
+    download_file('https://ClinicalTrials.gov/AllAPIJSON.zip', '/home/dev/AllAPIJSON.zip')
     existed_nct = clinical_trials_collection.distinct('nct_id')
     with ZipFile(path_to_zip, 'r') as zip:
         zip_files = zip.namelist()
