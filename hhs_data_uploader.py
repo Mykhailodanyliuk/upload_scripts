@@ -1,4 +1,5 @@
 import datetime
+import time
 from zipfile import ZipFile
 import os
 import shutil
@@ -235,4 +236,6 @@ def upload_hhs_data():
 
 
 if __name__ == '__main__':
-    upload_hhs_data()
+    while True:
+        upload_hhs_data()
+        time.sleep(14400)

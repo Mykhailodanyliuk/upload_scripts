@@ -1,5 +1,7 @@
 import json
 import datetime
+import time
+
 import pymongo
 from zipfile import ZipFile
 import os
@@ -63,4 +65,7 @@ def upload_clinical_trials():
 
 
 if __name__ == '__main__':
-    upload_clinical_trials()
+    while True:
+        time.sleep(900)
+        upload_clinical_trials()
+        time.sleep(14400)

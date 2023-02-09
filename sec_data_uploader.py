@@ -85,7 +85,8 @@ def upload_sec_fillings_data():
 
 
 if __name__ == '__main__':
-    # while True:
-    # upload_sec_tickers_data()
-    upload_sec_fillings_data()
-    # time.sleep(86400)
+    while True:
+        time.sleep(1800)
+        upload_sec_tickers_data()
+        upload_sec_fillings_data()
+        time.sleep(14400)
