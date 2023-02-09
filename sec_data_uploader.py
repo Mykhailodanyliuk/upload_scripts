@@ -25,7 +25,7 @@ def upload_sec_tickers_data():
         ticker = loc_json[company].get('ticker')
         title = loc_json[company].get('title')
         if sec_tickers_data_collection.find_one({'cik_str': str(loc_json[company].get('cik_str')).zfill(10)}) is None:
-            sec_tickers_data_collection.insert_one({'cik_str': cik_str, 'tickers': [ticker], 'title': title})
+            sec_tickers_data_collection.insert_one({'cik_str': cik_str, 'tickers': [ticker], 'title': title, 'upload_at': datetime.datetime.now()})
         else:
             tickers_db = sec_tickers_data_collection.find_one(
                 {'cik_str': str(loc_json[company].get('cik_str')).zfill(10)}).get('tickers')
@@ -51,7 +51,7 @@ def upload_sec_fillings_data():
     update_collection = addictional_tools.get_collection_from_db('db', 'update_collection')
     path_to_zip = '/home/dev/submissions.zip'
     path_to_data_directory = '/home/dev/submissions'
-    addictional_tools.download_file('https://www.sec.gov/Archives/edgar/daily-index/bulkdata/submissions.zip',
+    addictional_tools.download_file_requests('https://www.sec.gov/Archives/edgar/daily-index/bulkdata/submissions.zip',
                                     path_to_zip)
     last_len_records = sec_data_collection.count_documents({})
     existed_ciks = sec_data_collection.distinct('cik')
