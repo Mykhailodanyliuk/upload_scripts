@@ -1,62 +1,10 @@
-import asyncio
-import json
-import time, datetime
-import jellyfish
-import pymongo
-import parsing_tools
-import pytz
-import requests
+import datetime
 from zipfile import ZipFile
-import glob
 import os
 import shutil
 from csv import reader
 
-headers = {
-    "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:109.0) Gecko/20100101 Firefox/109.0",
-    "Accept": "*/*",
-    "Accept-Language": "uk-UA,uk;q=0.8,en-US;q=0.5,en;q=0.3",
-    "Accept-Encoding": "gzip, deflate, br"
-}
-
-
-def drop_collection_from_db(data_base, collection):
-    client = pymongo.MongoClient('mongodb://localhost:27017')
-    db = client[data_base]
-    db.drop_collection(collection)
-
-
-def get_collection_from_db(data_base, collection):
-    client = pymongo.MongoClient('mongodb://localhost:27017')
-    db = client[data_base]
-    return db[collection]
-
-
-def get_all_data_from_collection(collection):
-    col = get_collection_from_db('db', collection)
-    results = list(col.find())
-    return results
-
-
-def download_file(url, file_name):
-    try:
-        response = requests.get(url, headers=headers)
-        open(file_name, "wb").write(response.content)
-    except:
-        time.sleep(60)
-        print('problem')
-        download_file(url, file_name)
-    print('File is downloaded')
-
-
-def extract_zip_file(file_path, destination_path):
-    with ZipFile(file_path, 'r') as zObject:
-        zObject.extractall(
-            path=destination_path)
-    print('File is extracted')
-
-
-
+import addictional_tools
 
 headers = ['NPI', 'Entity Type Code', 'Replacement NPI', 'Employer Identification Number (EIN)',
            'Provider Organization Name (Legal Business Name)', 'Provider Last Name (Legal Name)', 'Provider First Name',
@@ -217,16 +165,18 @@ headers = ['NPI', 'Entity Type Code', 'Replacement NPI', 'Employer Identificatio
            'Healthcare Provider Taxonomy Group_13', 'Healthcare Provider Taxonomy Group_14',
            'Healthcare Provider Taxonomy Group_15', 'Certification Date']
 
-headers = [header.lower().replace(' ','_').replace(')','_').replace('(','_') for header in headers]
+headers = [header.lower().replace(' ', '_').replace(')', '_').replace('(', '_') for header in headers]
+
 
 def upload_hhs_data():
-    update_collection = get_collection_from_db('db', 'update_collection1')
-    nppes_data_individual_collection = get_collection_from_db('db', 'nppes_data_individual1')
-    nppes_data_entities_collection = get_collection_from_db('db', 'nppes_data_entities1')
+    update_collection = addictional_tools.get_collection_from_db('db', 'update_collection')
+    nppes_data_individual_collection = addictional_tools.get_collection_from_db('db', 'nppes_data_individual')
+    nppes_data_entities_collection = addictional_tools.get_collection_from_db('db', 'nppes_data_entities')
     path_to_zip = '/home/dev/NPPES_Data_Dissemination_January_2023.zip'
     path_to_data_directory = '/home/dev/NPPES_Data_Dissemination_January_2023'
     file_to_download = 'https://download.cms.gov/nppes/NPPES_Data_Dissemination_January_2023.zip'
-    download_file('https://download.cms.gov/nppes/NPPES_Data_Dissemination_January_2023.zip', '/home/dev/NPPES_Data_Dissemination_January_2023.zip')
+    addictional_tools.download_file('https://download.cms.gov/nppes/NPPES_Data_Dissemination_January_2023.zip',
+                                    '/home/dev/NPPES_Data_Dissemination_January_2023.zip')
     existed_npi_individual = nppes_data_individual_collection.distinct('npi')
     existed_npi_entities = nppes_data_entities_collection.distinct('npi')
     last_len_npi_individual_records = len(existed_npi_individual)
@@ -247,9 +197,11 @@ def upload_hhs_data():
                     for index, block in enumerate(row):
                         npi_data[headers[index]] = block
                     if (row[1] == '1') and (row[0] not in existed_npi_individual):
-                        nppes_data_individual_collection.insert_one({'npi': row[0], 'upload_at': datetime.datetime.now(),'data': npi_data})
+                        nppes_data_individual_collection.insert_one(
+                            {'npi': row[0], 'upload_at': datetime.datetime.now(), 'data': npi_data})
                     elif row[1] == '2' and (row[0] not in existed_npi_entities):
-                        nppes_data_entities_collection.insert_one({'npi': row[0], 'upload_at': datetime.datetime.now(),'data': npi_data})
+                        nppes_data_entities_collection.insert_one(
+                            {'npi': row[0], 'upload_at': datetime.datetime.now(), 'data': npi_data})
                     print('ok')
                 counter = counter + 1
                 if counter >= 1000:
@@ -263,21 +215,24 @@ def upload_hhs_data():
 
     total_records_individuals = nppes_data_individual_collection.count_documents({})
     total_records_entities = nppes_data_entities_collection.count_documents({})
-    update_query_individuals = {'name': 'hhs_individuals', 'new_records': total_records_individuals - last_len_npi_individual_records, 'total_records': total_records_individuals,
-                    'update_date': datetime.datetime.now()}
+    update_query_individuals = {'name': 'hhs_individuals',
+                                'new_records': total_records_individuals - last_len_npi_individual_records,
+                                'total_records': total_records_individuals,
+                                'update_date': datetime.datetime.now()}
     if update_collection.find_one({'name': 'hhs_individuals'}):
         update_collection.update_one({'name': 'hhs_individuals'}, {"$set": update_query_individuals})
     else:
         update_collection.insert_one(update_query_individuals)
 
     update_query_entities = {'name': 'hhs_entities',
-                                'new_records': total_records_entities - last_len_npi_entities_records,
-                                'total_records': total_records_entities,
-                                'update_date': datetime.datetime.now()}
+                             'new_records': total_records_entities - last_len_npi_entities_records,
+                             'total_records': total_records_entities,
+                             'update_date': datetime.datetime.now()}
     if update_collection.find_one({'name': 'hhs_entities'}):
         update_collection.update_one({'name': 'hhs_entities'}, {"$set": update_query_entities})
     else:
         update_collection.insert_one(update_query_entities)
+
+
 if __name__ == '__main__':
     upload_hhs_data()
-
