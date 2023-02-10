@@ -86,12 +86,12 @@ def upload_sec_fillings_data():
         update_collection.update_one({'name': 'sec'}, {"$set": update_query})
     else:
         update_collection.insert_one(update_query)
-    npi_collection = addictional_tools.get_collection_from_db('db','npi')
-    if update_collection.find_one({'name': 'npi'}):
-        update_collection.update_one({'name': 'npi'}, {"$set": {'name': 'npi', 'new_records': 0, 'total_records': npi_collection.count_documents({}),
+    npi_collection = addictional_tools.get_collection_from_db('db','npi_data')
+    if update_collection.find_one({'name': 'npi_data'}):
+        update_collection.update_one({'name': 'npi_data'}, {"$set": {'name': 'npi_data', 'new_records': 0, 'total_records': npi_collection.count_documents({}),
                     'update_date': datetime.datetime.now()}})
     else:
-        update_collection.insert_one({'name': 'npi', 'new_records': 0, 'total_records': npi_collection.count_documents({}),
+        update_collection.insert_one({'name': 'npi_data', 'new_records': 0, 'total_records': npi_collection.count_documents({}),
                     'update_date': datetime.datetime.now()})
 
 
