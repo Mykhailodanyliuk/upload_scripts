@@ -17,12 +17,12 @@ def upload_clinical_trials():
     path_to_zip = '/home/dev/AllAPIJSON.zip'
     path_to_data_directory = '/home/dev/AllAPIJSON'
     addictional_tools.download_file('https://ClinicalTrials.gov/AllAPIJSON.zip', '/home/dev/AllAPIJSON.zip')
-    existed_nct = clinical_trials_collection.distinct('nct_id')
+    existed_nct = [x.get('nct_id') for x in clinical_trials_collection.find({}, {'nct_id': 1, '_id':0})]
     with ZipFile(path_to_zip, 'r') as zip:
         zip_files = zip.namelist()
         zip_files.remove('Contents.txt')
         zip_files = [file for file in zip_files if file[-16:-5] not in existed_nct]
-        for file in zip_files[:2000]:
+        for file in zip_files:
             zip.extract(file, path=path_to_data_directory, pwd=None)
             with open(f'{path_to_data_directory}/{file}', 'r', encoding='utf-8') as json_file:
                 data = json.load(json_file)

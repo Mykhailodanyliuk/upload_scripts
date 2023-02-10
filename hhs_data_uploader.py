@@ -178,8 +178,8 @@ def upload_hhs_data():
     file_to_download = 'https://download.cms.gov/nppes/NPPES_Data_Dissemination_January_2023.zip'
     addictional_tools.download_file('https://download.cms.gov/nppes/NPPES_Data_Dissemination_January_2023.zip',
                                     '/home/dev/NPPES_Data_Dissemination_January_2023.zip')
-    existed_npi_individual = nppes_data_individual_collection.distinct('npi')
-    existed_npi_entities = nppes_data_entities_collection.distinct('npi')
+    existed_npi_individual = [x.get('npi') for x in nppes_data_individual_collection.find({}, {'npi': 1, '_id':0})]
+    existed_npi_entities = [x.get('npi') for x in nppes_data_entities_collection.find({}, {'npi': 1, '_id':0})]
     last_len_npi_individual_records = len(existed_npi_individual)
     last_len_npi_entities_records = len(existed_npi_entities)
     with ZipFile(path_to_zip, 'r') as zip:
@@ -205,8 +205,8 @@ def upload_hhs_data():
                             {'npi': row[0], 'upload_at': datetime.datetime.now(), 'data': npi_data})
                     print('ok')
                 counter = counter + 1
-                if counter >= 1000:
-                    break
+                # if counter >= 1000:
+                #     break
 
     if os.path.exists(path_to_zip):
         os.remove(path_to_zip)

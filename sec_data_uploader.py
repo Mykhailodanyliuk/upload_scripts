@@ -40,8 +40,8 @@ def upload_sec_tickers_data():
     update_query = {'name': 'sec_tickers', 'new_records': total_records - last_len_records,
                     'total_records': total_records,
                     'update_date': datetime.datetime.now()}
-    if update_collection.find_one({'name': 'sec'}):
-        update_collection.update_one({'name': 'sec'}, {"$set": update_query})
+    if update_collection.find_one({'name': 'sec_tickers'}):
+        update_collection.update_one({'name': 'sec_tickers'}, {"$set": update_query})
     else:
         update_collection.insert_one(update_query)
 
@@ -54,11 +54,12 @@ def upload_sec_fillings_data():
     addictional_tools.download_file_requests('https://www.sec.gov/Archives/edgar/daily-index/bulkdata/submissions.zip',
                                     path_to_zip)
     last_len_records = sec_data_collection.count_documents({})
-    existed_ciks = sec_data_collection.distinct('cik')
+    existed_ciks = [x.get('cik') for x in sec_data_collection.find({}, {'cik': 1, '_id':0})]
     with ZipFile(path_to_zip, 'r') as zip:
         zip_files = zip.namelist()
-        zip_files = [file for file in zip_files if ('-submissions-' not in file) and (file[3:13] not in existed_ciks)]
-        for file in zip_files[:2000]:
+        zip_files = [file[3:13] for file in zip_files if len(file) == 18]
+        zip_files = [f'CIK{file}.json' for file in list(set(zip_files).difference(existed_ciks))]
+        for file in zip_files:
             zip.extract(file, path=path_to_data_directory, pwd=None)
             with open(f'{path_to_data_directory}/{file}', 'r') as json_file:
                 new_sec_company_data = json.load(json_file)
@@ -82,6 +83,13 @@ def upload_sec_fillings_data():
         update_collection.update_one({'name': 'sec'}, {"$set": update_query})
     else:
         update_collection.insert_one(update_query)
+    npi_collection = addictional_tools.get_collection_from_db('db','npi')
+    if update_collection.find_one({'name': 'npi'}):
+        update_collection.update_one({'name': 'npi'}, {"$set": {'name': 'npi', 'new_records': 0, 'total_records': npi_collection.count_documents({}),
+                    'update_date': datetime.datetime.now()}})
+    else:
+        update_collection.insert_one({'name': 'npi', 'new_records': 0, 'total_records': npi_collection.count_documents({}),
+                    'update_date': datetime.datetime.now()})
 
 
 if __name__ == '__main__':
