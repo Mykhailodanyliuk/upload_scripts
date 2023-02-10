@@ -75,7 +75,10 @@ def upload_sec_fillings_data():
         os.remove(path_to_zip)
     else:
         print("The file does not exist")
-    shutil.rmtree(path_to_data_directory)
+    if os.path.exists(path_to_data_directory):
+        shutil.rmtree(path_to_data_directory)
+    else:
+        print("Directory does not exist")
     total_records = sec_data_collection.count_documents({})
     update_query = {'name': 'sec', 'new_records': total_records - last_len_records, 'total_records': total_records,
                     'update_date': datetime.datetime.now()}

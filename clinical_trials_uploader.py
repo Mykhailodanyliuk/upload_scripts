@@ -41,7 +41,10 @@ def upload_clinical_trials():
         os.remove(path_to_zip)
     else:
         print("The file does not exist")
-    shutil.rmtree(path_to_data_directory)
+    if os.path.exists(path_to_data_directory):
+        shutil.rmtree(path_to_data_directory)
+    else:
+        print("Directory does not exist")
 
     organizations = clinical_trials_collection.distinct(key='organization')
     last_len_records = len(organizations)

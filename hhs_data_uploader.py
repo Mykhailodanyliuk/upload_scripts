@@ -212,7 +212,10 @@ def upload_hhs_data():
         os.remove(path_to_zip)
     else:
         print("The file does not exist")
-    shutil.rmtree(path_to_data_directory)
+    if os.path.exists(path_to_data_directory):
+        shutil.rmtree(path_to_data_directory)
+    else:
+        print("Directory does not exist")
 
     total_records_individuals = nppes_data_individual_collection.count_documents({})
     total_records_entities = nppes_data_entities_collection.count_documents({})
