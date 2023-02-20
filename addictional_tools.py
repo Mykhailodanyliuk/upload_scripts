@@ -81,8 +81,6 @@ def get_request_data(url, verify=False):
 
 
 def create_directory(path_to_dir, name):
-    name = "downloads"
-    path_to_dir = os.getcwd()
     path = os.path.join(path_to_dir, name)
     try:
         os.mkdir(path)
