@@ -81,8 +81,6 @@ def get_request_data(url, verify=False):
 
 
 def create_directory(path_to_dir, name):
-    path = os.path.join(path_to_dir, name)
-    try:
-        os.mkdir(path)
-    except FileExistsError:
-        print("Directory is already existed")
+    mypath = f'{path_to_dir}/{name}'
+    if not os.path.isdir(mypath):
+        os.makedirs(mypath)
