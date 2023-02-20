@@ -59,7 +59,7 @@ def get_fda_list_new_zip_files():
     for category in all_files_json.get('results').keys():
         for subcategory in all_files_json.get('results').get(category).keys():
             if subcategory != 'drugsfda':
-                for partition in all_files_json.get('results').get(category).get(subcategory).get('partitions')[:3]:
+                for partition in all_files_json.get('results').get(category).get(subcategory).get('partitions'):
                     file_link = partition.get('file')
                     if not fda_all_zip.find_one({'zip_name': file_link}):
                         files_list.append({'category': category, 'subcategory': subcategory, 'file_link': file_link})

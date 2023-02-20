@@ -35,10 +35,10 @@ def upload_patents_data(file):
 
 
 def upload_all_uspto_zips():
-    start_date = "2022-01-01"
+    start_date = "2016-01-01"
     uspto_all_zip = get_collection_from_db('db', 'uspto_zips')
     current_directory = os.getcwd()
-    for i in range(10):
+    for i in range(100):
         from_date = pd.to_datetime(start_date) + pd.DateOffset(months=i)
         from_date = from_date.strftime('%m-%d-%Y')
         to_date = pd.to_datetime(start_date) + pd.DateOffset(months=i + 1)

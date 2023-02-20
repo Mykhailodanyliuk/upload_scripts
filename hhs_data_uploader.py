@@ -181,7 +181,7 @@ def upload_hhs_data():
     file_to_download = 'https://download.cms.gov/nppes/NPPES_Data_Dissemination_January_2023.zip'
     path_to_zip = f'{path_to_directory}/NPPES_Data_Dissemination_January_2023.zip'
     download_file('https://download.cms.gov/nppes/NPPES_Data_Dissemination_January_2023.zip',
-                  '/home/dev/NPPES_Data_Dissemination_January_2023.zip')
+                  f'{path_to_directory}/NPPES_Data_Dissemination_January_2023.zip')
     existed_npi_individual = [x.get('npi') for x in nppes_data_individual_collection.find({}, {'npi': 1, '_id': 0})]
     existed_npi_entities = [x.get('npi') for x in nppes_data_entities_collection.find({}, {'npi': 1, '_id': 0})]
     last_len_npi_individual_records = len(existed_npi_individual)

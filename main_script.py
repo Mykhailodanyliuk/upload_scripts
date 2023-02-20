@@ -15,7 +15,6 @@ if __name__ == '__main__':
             print("sec_tickers problem")
             print(traceback.format_exc())
         try:
-            sec_data_uploader.upload_sec_tickers_data()
             sec_data_uploader.upload_sec_fillings_data()
         except Exception as e:
             print("sec_fillings problem")
