@@ -5,7 +5,7 @@ import jellyfish
 import pymongo
 import wget
 
-import addictional_tools
+from addictional_tools import *
 import pytz
 import requests
 from zipfile import ZipFile
@@ -50,14 +50,14 @@ def upload_data_to_db(file, collection):
     with open(file, 'r', encoding='utf-8') as opened_file:
         json_data = json.load(opened_file)
         results = json_data.get('results')
-        for result in results[:500]:
+        for result in results:
             result['upload_at'] = datetime.datetime.now()
             data_collection.insert_one(result)
 
 
 def get_fda_list_new_zip_files():
     fda_all_zip = get_collection_from_db('db', 'fda_files')
-    all_files_json = addictional_tools.get_json_from_request('https://api.fda.gov/download.json')
+    all_files_json = get_json_from_request('https://api.fda.gov/download.json')
     files_list = []
     for category in all_files_json.get('results').keys():
         for subcategory in all_files_json.get('results').get(category).keys():
@@ -77,24 +77,19 @@ def upload_fda_data(file_dict):
     subcategory = file_dict.get('subcategory')
     collection = get_collection_from_db('db', f'fda_{category}_{subcategory}')
     last_len_records = collection.count_documents({})
-    path_to_data_directory = 'G:/Programming/workProject/downloads'
+    current_directory = os.getcwd()
+    directory_name = 'downloads'
+    path_to_directory = f'{current_directory}/{directory_name}'
+    delete_directory(path_to_directory)
+    create_directory(current_directory, directory_name)
     zip_file_path = file_link[::-1]
-    zip_file_path = f"{path_to_data_directory}/{zip_file_path[:zip_file_path.find('/')][::-1]}"
-    directory = "downloads"
-    parent_dir = "G:/Programming/workProject"
-    path = os.path.join(parent_dir, directory)
-    try:
-        os.mkdir(path)
-    except FileExistsError:
-        pass
-    print(file_link)
+    zip_file_path = f"{path_to_directory}/{zip_file_path[:zip_file_path.find('/')][::-1]}"
     wget.download(file_link, zip_file_path)
     with ZipFile(zip_file_path, 'r') as zip:
-        zip.extractall(path=path_to_data_directory)
+        zip.extractall(path=path_to_directory)
     file_path = zip_file_path.replace('.zip', '')
     upload_data_to_db(file_path, f'fda_{category}_{subcategory}')
-    if os.path.exists(path_to_data_directory):
-        shutil.rmtree(path_to_data_directory)
+    delete_directory(path_to_directory)
     fda_all_zip.insert_one({'zip_name': file_link})
 
     total_records = collection.count_documents({})
