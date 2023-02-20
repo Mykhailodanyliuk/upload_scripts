@@ -12,6 +12,7 @@ from zipfile import ZipFile
 import glob
 import os
 import shutil
+import ijson
 
 headers = {
     "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:109.0) Gecko/20100101 Firefox/109.0",
@@ -48,9 +49,7 @@ def get_collection_from_db(data_base, collection):
 def upload_data_to_db(file, collection):
     data_collection = get_collection_from_db('db', collection)
     with open(file, 'r', encoding='utf-8') as opened_file:
-        json_data = json.load(opened_file)
-        results = json_data.get('results')
-        for result in results:
+        for result in ijson.items(opened_file, 'results.item'):
             result['upload_at'] = datetime.datetime.now()
             data_collection.insert_one(result)
 
@@ -62,7 +61,7 @@ def get_fda_list_new_zip_files():
     for category in all_files_json.get('results').keys():
         for subcategory in all_files_json.get('results').get(category).keys():
             if subcategory != 'drugsfda':
-                for partition in all_files_json.get('results').get(category).get(subcategory).get('partitions')[:1]:
+                for partition in all_files_json.get('results').get(category).get(subcategory).get('partitions')[:3]:
                     file_link = partition.get('file')
                     if not fda_all_zip.find_one({'zip_name': file_link}):
                         files_list.append({'category': category, 'subcategory': subcategory, 'file_link': file_link})
