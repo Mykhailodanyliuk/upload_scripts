@@ -7,24 +7,27 @@ from zipfile import ZipFile
 import os
 import shutil
 
-import addictional_tools
-
+from addictional_tools import *
 
 def upload_clinical_trials():
-    clinical_trials_collection = addictional_tools.get_collection_from_db('db', 'clinical_trials')
-    organizations_collection = addictional_tools.get_collection_from_db('db', 'clinical_trials_organizations')
-    update_collection = addictional_tools.get_collection_from_db('db', 'update_collection')
-    path_to_zip = '/home/dev/AllAPIJSON.zip'
-    path_to_data_directory = '/home/dev/AllAPIJSON'
-    addictional_tools.download_file('https://ClinicalTrials.gov/AllAPIJSON.zip', '/home/dev/AllAPIJSON.zip')
+    clinical_trials_collection = get_collection_from_db('db', 'clinical_trials')
+    organizations_collection = get_collection_from_db('db', 'clinical_trials_organizations')
+    update_collection = get_collection_from_db('db', 'update_collection')
+    current_directory = os.getcwd()
+    directory_name = 'downloads'
+    path_to_directory = f'{current_directory}/{directory_name}'
+    delete_directory(path_to_directory)
+    create_directory(current_directory, directory_name)
+    path_to_zip = f'{path_to_directory}/AllAPIJSON.zip'
+    download_file('https://ClinicalTrials.gov/AllAPIJSON.zip', path_to_zip)
     existed_nct = [x.get('nct_id') for x in clinical_trials_collection.find({}, {'nct_id': 1, '_id':0})]
     with ZipFile(path_to_zip, 'r') as zip:
         zip_files = zip.namelist()
         zip_files.remove('Contents.txt')
         zip_files = [file for file in zip_files if file[-16:-5] not in existed_nct]
         for file in zip_files:
-            zip.extract(file, path=path_to_data_directory, pwd=None)
-            with open(f'{path_to_data_directory}/{file}', 'r', encoding='utf-8') as json_file:
+            zip.extract(file, path=path_to_directory, pwd=None)
+            with open(f'{path_to_directory}/{file}', 'r', encoding='utf-8') as json_file:
                 data = json.load(json_file)
                 organization = data.get('FullStudy').get('Study').get('ProtocolSection').get(
                     'IdentificationModule').get('Organization').get('OrgFullName')
@@ -36,15 +39,8 @@ def upload_clinical_trials():
                         {'organization': organization, 'nct_id': nct_id, 'upload_at': upload_at, 'data': data})
                 except pymongo.errors.DuplicateKeyError:
                     continue
+    delete_directory(path_to_directory)
 
-    if os.path.exists(path_to_zip):
-        os.remove(path_to_zip)
-    else:
-        print("The file does not exist")
-    if os.path.exists(path_to_data_directory):
-        shutil.rmtree(path_to_data_directory)
-    else:
-        print("Directory does not exist")
 
     organizations = clinical_trials_collection.distinct(key='organization')
     last_len_records = len(organizations)

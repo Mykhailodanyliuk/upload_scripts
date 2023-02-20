@@ -1,9 +1,4 @@
-import asyncio
-import json
 import time, datetime
-import jellyfish
-import pymongo
-import wget
 
 from addictional_tools import *
 import pytz
@@ -51,7 +46,10 @@ def upload_data_to_db(file, collection):
     with open(file, 'r', encoding='utf-8') as opened_file:
         for result in ijson.items(opened_file, 'results.item'):
             result['upload_at'] = datetime.datetime.now()
-            data_collection.insert_one(result)
+            try:
+                data_collection.insert_one(result)
+            except :
+                'Not added'
 
 
 def get_fda_list_new_zip_files():

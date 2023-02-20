@@ -5,7 +5,7 @@ import os
 import shutil
 from csv import reader
 
-import addictional_tools
+from addictional_tools import *
 
 headers = ['NPI', 'Entity Type Code', 'Replacement NPI', 'Employer Identification Number (EIN)',
            'Provider Organization Name (Legal Business Name)', 'Provider Last Name (Legal Name)', 'Provider First Name',
@@ -170,16 +170,20 @@ headers = [header.lower().replace(' ', '_').replace(')', '_').replace('(', '_') 
 
 
 def upload_hhs_data():
-    update_collection = addictional_tools.get_collection_from_db('db', 'update_collection')
-    nppes_data_individual_collection = addictional_tools.get_collection_from_db('db', 'nppes_data_individual')
-    nppes_data_entities_collection = addictional_tools.get_collection_from_db('db', 'nppes_data_entities')
-    path_to_zip = '/home/dev/NPPES_Data_Dissemination_January_2023.zip'
-    path_to_data_directory = '/home/dev/NPPES_Data_Dissemination_January_2023'
+    update_collection = get_collection_from_db('db', 'update_collection')
+    nppes_data_individual_collection = get_collection_from_db('db', 'nppes_data_individual')
+    nppes_data_entities_collection = get_collection_from_db('db', 'nppes_data_entities')
+    current_directory = os.getcwd()
+    directory_name = 'downloads'
+    path_to_directory = f'{current_directory}/{directory_name}'
+    delete_directory(path_to_directory)
+    create_directory(current_directory, directory_name)
     file_to_download = 'https://download.cms.gov/nppes/NPPES_Data_Dissemination_January_2023.zip'
-    addictional_tools.download_file('https://download.cms.gov/nppes/NPPES_Data_Dissemination_January_2023.zip',
-                                    '/home/dev/NPPES_Data_Dissemination_January_2023.zip')
-    existed_npi_individual = [x.get('npi') for x in nppes_data_individual_collection.find({}, {'npi': 1, '_id':0})]
-    existed_npi_entities = [x.get('npi') for x in nppes_data_entities_collection.find({}, {'npi': 1, '_id':0})]
+    path_to_zip = f'{path_to_directory}/NPPES_Data_Dissemination_January_2023.zip'
+    download_file('https://download.cms.gov/nppes/NPPES_Data_Dissemination_January_2023.zip',
+                  '/home/dev/NPPES_Data_Dissemination_January_2023.zip')
+    existed_npi_individual = [x.get('npi') for x in nppes_data_individual_collection.find({}, {'npi': 1, '_id': 0})]
+    existed_npi_entities = [x.get('npi') for x in nppes_data_entities_collection.find({}, {'npi': 1, '_id': 0})]
     last_len_npi_individual_records = len(existed_npi_individual)
     last_len_npi_entities_records = len(existed_npi_entities)
     with ZipFile(path_to_zip, 'r') as zip:
@@ -188,10 +192,9 @@ def upload_hhs_data():
         for file in zip_files:
             if ('npidata_pfile' in file) and ('fileheader' not in file):
                 file_name = file
-        zip.extract(file_name, path=path_to_data_directory, pwd=None)
-        with open(f'{path_to_data_directory}/{file_name}', 'r') as read_obj:
+        zip.extract(file_name, path=path_to_directory, pwd=None)
+        with open(f'{path_to_directory}/{file_name}', 'r') as read_obj:
             csv_reader = reader(read_obj)
-            counter = 0
             for row in csv_reader:
                 if row[39] == '':
                     npi_data = {}
@@ -204,19 +207,7 @@ def upload_hhs_data():
                         nppes_data_entities_collection.insert_one(
                             {'npi': row[0], 'upload_at': datetime.datetime.now(), 'data': npi_data})
                     print('ok')
-                counter = counter + 1
-                # if counter >= 1000:
-                #     break
-
-    if os.path.exists(path_to_zip):
-        os.remove(path_to_zip)
-    else:
-        print("The file does not exist")
-    if os.path.exists(path_to_data_directory):
-        shutil.rmtree(path_to_data_directory)
-    else:
-        print("Directory does not exist")
-
+    delete_directory(path_to_directory)
     total_records_individuals = nppes_data_individual_collection.count_documents({})
     total_records_entities = nppes_data_entities_collection.count_documents({})
     update_query_individuals = {'name': 'hhs_individuals',
