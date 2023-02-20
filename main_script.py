@@ -12,21 +12,21 @@ if __name__ == '__main__':
             sec_data_uploader.upload_sec_tickers_data()
             sec_data_uploader.upload_sec_fillings_data()
         except Exception as e:
-            print("uspto_data_uploader problem")
+            print("sec_data_uploader problem")
             print(e)
         try:
             hhs_data_uploader.upload_hhs_data()
         except Exception as e:
-            print("uspto_data_uploader problem")
+            print("hhs_data_uploader problem")
             print(e)
         try:
             for zip_file in fda_data_uploader_mongo.get_fda_list_new_zip_files():
                 fda_data_uploader_mongo.upload_fda_data(zip_file)
         except Exception as e:
-            print("uspto_data_uploader problem")
+            print("fda_data_uploader_mongo problem")
             print(e)
         try:
             clinical_trials_uploader.upload_clinical_trials()
         except Exception as e:
-            print("uspto_data_uploader problem")
+            print("clinical_trials_uploader problem")
             print(e)
