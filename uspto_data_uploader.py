@@ -45,18 +45,16 @@ def upload_all_uspto_zips():
         to_date = to_date.strftime('%m-%d-%Y')
         url = f'https://developer.uspto.gov/ibd-api/v1/weeklyarchivedata/searchWeeklyArchiveData?fromDate={from_date}&toDate={to_date}'
         request_data = get_request_data(url)
-        print(url)
         directory_name = 'downloads'
         path_to_directory = f'{current_directory}/{directory_name}'
         delete_directory(path_to_directory)
         create_directory(current_directory, directory_name)
-        for file_data in json.loads(request_data.text)[:1]:
+        for file_data in json.loads(request_data.text):
             zip_file_link = (file_data.get('archiveDownloadURL'))
             if not uspto_all_zip.find_one({'zip_link': zip_file_link}):
                 zip_file_name = zip_file_link[-37:]
                 path_to_zip_file = f'{path_to_directory}/{zip_file_name}'
                 wget.download(zip_file_link, path_to_zip_file)
-                print('downloaded')
                 with ZipFile(path_to_zip_file, 'r') as zip:
                     file_path = zip.namelist()[0]
                     zip.extract(file_path, path_to_directory)

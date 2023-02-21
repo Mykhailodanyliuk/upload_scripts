@@ -206,7 +206,6 @@ def upload_hhs_data():
                     elif row[1] == '2' and (row[0] not in existed_npi_entities):
                         nppes_data_entities_collection.insert_one(
                             {'npi': row[0], 'upload_at': datetime.datetime.now(), 'data': npi_data})
-                    print('ok')
     delete_directory(path_to_directory)
     total_records_individuals = nppes_data_individual_collection.count_documents({})
     total_records_entities = nppes_data_entities_collection.count_documents({})
@@ -227,6 +226,7 @@ def upload_hhs_data():
         update_collection.update_one({'name': 'hhs_entities'}, {"$set": update_query_entities})
     else:
         update_collection.insert_one(update_query_entities)
+
 
 
 if __name__ == '__main__':

@@ -25,7 +25,6 @@ def upload_sec_tickers_data():
                 {'cik_str': str(loc_json[company].get('cik_str')).zfill(10)}).get('tickers')
             if ticker not in tickers_db:
                 tickers_db.append(ticker)
-                print(tickers_db)
             update_query = {'tickers': tickers_db}
             sec_tickers_data_collection.update_one({'cik_str': str(loc_json[company].get('cik_str')).zfill(10)},
                                                    {"$set": update_query})
@@ -44,7 +43,6 @@ def upload_sec_fillings_data():
     sec_data_collection = get_collection_from_db('db', 'sec_data')
     update_collection = get_collection_from_db('db', 'update_collection')
     current_directory = os.getcwd()
-    print(current_directory)
     directory_name = 'downloads'
     path_to_directory = f'{current_directory}/{directory_name}'
     delete_directory(path_to_directory)
