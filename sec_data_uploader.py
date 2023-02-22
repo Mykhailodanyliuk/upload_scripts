@@ -5,7 +5,7 @@ from addictional_tools import *
 def upload_sec_tickers_data():
     update_collection = get_collection_from_db('db', 'update_collection')
     sec_tickers_data_collection = get_collection_from_db('db', 'sec_data_tickers')
-    last_len_records = sec_tickers_data_collection.count_documents({})
+    last_len_records = sec_tickers_data_collection.estimated_document_count()
     while True:
         try:
             loc_json = json.loads((requests.get('https://www.sec.gov/files/company_tickers.json')).text)
@@ -29,7 +29,7 @@ def upload_sec_tickers_data():
             sec_tickers_data_collection.update_one({'cik_str': str(loc_json[company].get('cik_str')).zfill(10)},
                                                    {"$set": update_query})
 
-    total_records = sec_tickers_data_collection.count_documents({})
+    total_records = sec_tickers_data_collection.estimated_document_count()
     update_query = {'name': 'sec_tickers', 'new_records': total_records - last_len_records,
                     'total_records': total_records,
                     'update_date': datetime.datetime.now()}
@@ -50,7 +50,7 @@ def upload_sec_fillings_data():
     path_to_zip = f'{path_to_directory}/submissions.zip'
     download_file_requests('https://www.sec.gov/Archives/edgar/daily-index/bulkdata/submissions.zip',
                            path_to_zip)
-    last_len_records = sec_data_collection.count_documents({})
+    last_len_records = sec_data_collection.estimated_document_count()
     existed_ciks = [x.get('cik') for x in sec_data_collection.find({}, {'cik': 1, '_id': 0})]
     with ZipFile(path_to_zip, 'r') as zip:
         zip_files = zip.namelist()
@@ -69,7 +69,7 @@ def upload_sec_fillings_data():
                 except pymongo.errors.DuplicateKeyError:
                     continue
     delete_directory(path_to_directory)
-    total_records = sec_data_collection.count_documents({})
+    total_records = sec_data_collection.estimated_document_count()
     update_query = {'name': 'sec_data', 'new_records': total_records - last_len_records, 'total_records': total_records,
                     'update_date': datetime.datetime.now()}
     if update_collection.find_one({'name': 'sec_data'}):
@@ -79,11 +79,11 @@ def upload_sec_fillings_data():
     npi_collection = get_collection_from_db('db', 'npi_data')
     if update_collection.find_one({'name': 'npi_data'}):
         update_collection.update_one({'name': 'npi_data'}, {
-            "$set": {'name': 'npi_data', 'new_records': 0, 'total_records': npi_collection.count_documents({}),
+            "$set": {'name': 'npi_data', 'new_records': 0, 'total_records': npi_collection.estimated_document_count(),
                      'update_date': datetime.datetime.now()}})
     else:
         update_collection.insert_one(
-            {'name': 'npi_data', 'new_records': 0, 'total_records': npi_collection.count_documents({}),
+            {'name': 'npi_data', 'new_records': 0, 'total_records': npi_collection.estimated_document_count(),
              'update_date': datetime.datetime.now()})
 
 

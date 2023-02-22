@@ -207,8 +207,8 @@ def upload_hhs_data():
                         nppes_data_entities_collection.insert_one(
                             {'npi': row[0], 'upload_at': datetime.datetime.now(), 'data': npi_data})
     delete_directory(path_to_directory)
-    total_records_individuals = nppes_data_individual_collection.count_documents({})
-    total_records_entities = nppes_data_entities_collection.count_documents({})
+    total_records_individuals = nppes_data_individual_collection.estimated_document_count()
+    total_records_entities = nppes_data_entities_collection.estimated_document_count()
     update_query_individuals = {'name': 'hhs_individuals',
                                 'new_records': total_records_individuals - last_len_npi_individual_records,
                                 'total_records': total_records_individuals,

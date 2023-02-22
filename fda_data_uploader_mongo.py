@@ -53,6 +53,7 @@ def upload_data_to_db(file, collection):
 
 
 def get_fda_list_new_zip_files():
+    update_collection = get_collection_from_db('db', 'update_collection')
     fda_all_zip = get_collection_from_db('db', 'fda_files')
     all_files_json = get_json_from_request('https://api.fda.gov/download.json')
     files_list = []
@@ -63,6 +64,15 @@ def get_fda_list_new_zip_files():
                     file_link = partition.get('file')
                     if not fda_all_zip.find_one({'zip_name': file_link}):
                         files_list.append({'category': category, 'subcategory': subcategory, 'file_link': file_link})
+    if not files_list:
+        for category in all_files_json.get('results').keys():
+            for subcategory in all_files_json.get('results').get(category).keys():
+                if subcategory != 'drugsfda':
+                    update_query = {'name': f'fda_{category}_{subcategory}',
+                                    'new_records': 0,
+                                    'total_records': get_collection_from_db('db',f'fda_{category}_{subcategory}').estimated_document_count(),
+                                    'update_date': datetime.datetime.now()}
+                    update_collection.update_one({'name': f'fda_{category}_{subcategory}'}, {"$set": update_query})
     return files_list
 
 
@@ -73,7 +83,7 @@ def upload_fda_data(file_dict):
     category = file_dict.get('category')
     subcategory = file_dict.get('subcategory')
     collection = get_collection_from_db('db', f'fda_{category}_{subcategory}')
-    last_len_records = collection.count_documents({})
+    last_len_records = collection.estimated_document_count()
     current_directory = os.getcwd()
     directory_name = 'downloads'
     path_to_directory = f'{current_directory}/{directory_name}'
@@ -89,7 +99,7 @@ def upload_fda_data(file_dict):
     delete_directory(path_to_directory)
     fda_all_zip.insert_one({'zip_name': file_link})
 
-    total_records = collection.count_documents({})
+    total_records = collection.estimated_document_count()
     update_query = {'name': f'fda_{category}_{subcategory}', 'new_records': total_records - last_len_records,
                     'total_records': total_records,
                     'update_date': datetime.datetime.now()}

@@ -54,7 +54,11 @@ def upload_all_uspto_zips():
             if not uspto_all_zip.find_one({'zip_link': zip_file_link}):
                 zip_file_name = zip_file_link[-37:]
                 path_to_zip_file = f'{path_to_directory}/{zip_file_name}'
-                wget.download(zip_file_link, path_to_zip_file)
+                try:
+                    wget.download(zip_file_link, path_to_zip_file)
+                except:
+                    print('Problem download')
+                    continue
                 with ZipFile(path_to_zip_file, 'r') as zip:
                     file_path = zip.namelist()[0]
                     zip.extract(file_path, path_to_directory)
