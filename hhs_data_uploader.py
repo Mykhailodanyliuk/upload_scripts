@@ -182,10 +182,10 @@ def upload_hhs_data():
     path_to_zip = f'{path_to_directory}/NPPES_Data_Dissemination_January_2023.zip'
     download_file('https://download.cms.gov/nppes/NPPES_Data_Dissemination_January_2023.zip',
                   f'{path_to_directory}/NPPES_Data_Dissemination_January_2023.zip')
-    existed_npi_individual = [x.get('npi') for x in nppes_data_individual_collection.find({}, {'npi': 1, '_id': 0})]
-    existed_npi_entities = [x.get('npi') for x in nppes_data_entities_collection.find({}, {'npi': 1, '_id': 0})]
-    last_len_npi_individual_records = len(existed_npi_individual)
-    last_len_npi_entities_records = len(existed_npi_entities)
+    # existed_npi_individual = [x.get('npi') for x in nppes_data_individual_collection.find({}, {'npi': 1, '_id': 0})]
+    # existed_npi_entities = [x.get('npi') for x in nppes_data_entities_collection.find({}, {'npi': 1, '_id': 0})]
+    last_len_npi_individual_records = nppes_data_individual_collection.estimated_document_count()
+    last_len_npi_entities_records = nppes_data_entities_collection.estimated_document_count()
     with ZipFile(path_to_zip, 'r') as zip:
         zip_files = zip.namelist()
         file_name = ''
@@ -200,10 +200,10 @@ def upload_hhs_data():
                     npi_data = {}
                     for index, block in enumerate(row):
                         npi_data[headers[index]] = block
-                    if (row[1] == '1') and (row[0] not in existed_npi_individual):
+                    if (row[1] == '1') and not nppes_data_individual_collection.find_one({'npi': row[0]}):
                         nppes_data_individual_collection.insert_one(
                             {'npi': row[0], 'upload_at': datetime.datetime.now(), 'data': npi_data})
-                    elif row[1] == '2' and (row[0] not in existed_npi_entities):
+                    elif row[1] == '2' and nppes_data_entities_collection.find_one({'npi': row[0]}):
                         nppes_data_entities_collection.insert_one(
                             {'npi': row[0], 'upload_at': datetime.datetime.now(), 'data': npi_data})
     delete_directory(path_to_directory)
@@ -228,8 +228,6 @@ def upload_hhs_data():
         update_collection.insert_one(update_query_entities)
 
 
-
 if __name__ == '__main__':
     while True:
         upload_hhs_data()
-        time.sleep(14400)

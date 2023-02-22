@@ -88,5 +88,6 @@ def upload_sec_fillings_data():
 
 
 if __name__ == '__main__':
-    upload_sec_tickers_data()
-    upload_sec_fillings_data()
+    while True:
+        upload_sec_tickers_data()
+        upload_sec_fillings_data()

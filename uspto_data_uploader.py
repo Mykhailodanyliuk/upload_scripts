@@ -68,4 +68,5 @@ def upload_all_uspto_zips():
 
 
 if __name__ == '__main__':
-    upload_all_uspto_zips()
+    while True:
+        upload_all_uspto_zips()

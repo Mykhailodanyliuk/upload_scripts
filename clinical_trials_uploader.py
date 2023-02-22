@@ -29,7 +29,7 @@ def upload_clinical_trials():
         l_z = len(zip_files)
         # zip_files = [file for file in zip_files if file[-16:-5] not in existed_nct]
         for index, file in enumerate(zip_files):
-            print(index + 'of' + l_z)
+            print(f'{index} of {l_z}')
             if not clinical_trials_collection.find_one({'nct_id':file[-16:-5]}):
                 zip.extract(file, path=path_to_directory, pwd=None)
                 with open(f'{path_to_directory}/{file}', 'r', encoding='utf-8') as json_file:
@@ -55,11 +55,11 @@ def upload_clinical_trials():
     else:
         update_collection.insert_one(update_query)
 
-    organizations = clinical_trials_collection.distinct(key='organization')
+    organizations = list(set([i.get('organization') for i in list(clinical_trials_collection.find({},{'_id':0,'organization':1}))]))
     last_len_records = len(organizations)
     for organization in list(organizations):
         list_organization_trials = [trial.get('nct_id') for trial in list(clinical_trials_collection.find(
-            {'organization': organization}))]
+            {'organization': organization}, {'_id': 0, 'nct_id': 1}))]
         if organizations_collection.find_one({'name': organization}) is None:
             organizations_collection.insert_one({'organization': organization, 'nct_ids': list_organization_trials})
         else:
@@ -78,6 +78,4 @@ def upload_clinical_trials():
 
 if __name__ == '__main__':
     while True:
-        time.sleep(900)
         upload_clinical_trials()
-        time.sleep(14400)

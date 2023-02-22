@@ -110,5 +110,6 @@ def upload_fda_data(file_dict):
 
 
 if __name__ == '__main__':
-    for zip_file in get_fda_list_new_zip_files():
-        upload_fda_data(zip_file)
+    while True:
+        for zip_file in get_fda_list_new_zip_files():
+            upload_fda_data(zip_file)
