@@ -15,12 +15,13 @@ def upload_clinical_trials():
     organizations_collection = get_collection_from_db('db', 'clinical_trials_organizations')
     update_collection = get_collection_from_db('db', 'update_collection')
     current_directory = os.getcwd()
-    directory_name = 'downloads'
+    directory_name = 'clinical_trials'
     path_to_directory = f'{current_directory}/{directory_name}'
     delete_directory(path_to_directory)
     create_directory(current_directory, directory_name)
     path_to_zip = f'{path_to_directory}/AllAPIJSON.zip'
     download_file('https://ClinicalTrials.gov/AllAPIJSON.zip', path_to_zip)
+    total_trials = clinical_trials_collection.estimated_document_count()
     # existed_nct = [x.get('nct_id') for x in clinical_trials_collection.find({}, {'nct_id': 1, '_id': 0})]
     with ZipFile(path_to_zip, 'r') as zip:
         zip_files = zip.namelist()
@@ -45,6 +46,15 @@ def upload_clinical_trials():
                         continue
     delete_directory(path_to_directory)
 
+    last_len_trials_records = clinical_trials_collection.estimated_document_count()
+    update_query = {'name': 'clinical_trials', 'new_records': total_trials - last_len_trials_records,
+                    'total_records': total_trials,
+                    'update_date': datetime.datetime.now()}
+    if update_collection.find_one({'name': 'clinical_trials'}):
+        update_collection.update_one({'name': 'clinical_trials'}, {"$set": update_query})
+    else:
+        update_collection.insert_one(update_query)
+
     organizations = clinical_trials_collection.distinct(key='organization')
     last_len_records = len(organizations)
     for organization in list(organizations):
@@ -57,7 +67,7 @@ def upload_clinical_trials():
                                                 {'$set': {'nct_ids': list_organization_trials}})
 
     total_records = organizations_collection.estimated_document_count()
-    update_query = {'name': 'clinical_trials', 'new_records': total_records - last_len_records,
+    update_query = {'name': 'clinical_trials_organizations', 'new_records': total_records - last_len_records,
                     'total_records': total_records,
                     'update_date': datetime.datetime.now()}
     if update_collection.find_one({'name': 'clinical_trials'}):
