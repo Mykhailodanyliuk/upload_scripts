@@ -6,18 +6,13 @@ from zipfile import ZipFile
 import os
 import pandas as pd
 
-from addictional_tools import get_request_data, delete_directory, create_directory
+from addictional_tools import get_request_data, delete_directory, create_directory,get_collection_from_db
 
-
-def get_collection_from_db(data_base, collection):
-    client = pymongo.MongoClient('mongodb://localhost:27017')
-    db = client[data_base]
-    return db[collection]
 
 
 def upload_patents_data(file):
-    data_collection = get_collection_from_db('db', 'uspto_data')
-    update_collection = get_collection_from_db('db', 'update_collection')
+    data_collection = get_collection_from_db('db', 'uspto_data',client)
+    update_collection = get_collection_from_db('db', 'update_collection',client)
     last_len_records = data_collection.count_documents({})
     for line in open(file, 'r', encoding='utf-8'):
         patent = json.loads(line)
@@ -36,7 +31,7 @@ def upload_patents_data(file):
 
 def upload_all_uspto_zips():
     start_date = "2016-01-01"
-    uspto_all_zip = get_collection_from_db('db', 'uspto_zips')
+    uspto_all_zip = get_collection_from_db('db', 'uspto_zips',client)
     current_directory = os.getcwd()
     for i in range(100):
         from_date = pd.to_datetime(start_date) + pd.DateOffset(months=i)
@@ -45,7 +40,7 @@ def upload_all_uspto_zips():
         to_date = to_date.strftime('%m-%d-%Y')
         url = f'https://developer.uspto.gov/ibd-api/v1/weeklyarchivedata/searchWeeklyArchiveData?fromDate={from_date}&toDate={to_date}'
         request_data = get_request_data(url)
-        directory_name = 'downloads'
+        directory_name = 'uspto'
         path_to_directory = f'{current_directory}/{directory_name}'
         delete_directory(path_to_directory)
         create_directory(current_directory, directory_name)
@@ -69,4 +64,6 @@ def upload_all_uspto_zips():
 
 if __name__ == '__main__':
     while True:
+        client = pymongo.MongoClient('mongodb://localhost:27017')
         upload_all_uspto_zips()
+        client.close()

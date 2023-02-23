@@ -19,8 +19,13 @@ def drop_collection_from_db(data_base, collection):
     db.drop_collection(collection)
 
 
-def get_collection_from_db(data_base, collection):
-    client = pymongo.MongoClient('mongodb://localhost:27017')
+# def get_collection_from_db(data_base, collection):
+#     client = pymongo.MongoClient('mongodb://localhost:27017')
+#     db = client[data_base]
+#     return db[collection]
+
+
+def get_collection_from_db(data_base, collection, client):
     db = client[data_base]
     return db[collection]
 

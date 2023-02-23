@@ -1,12 +1,8 @@
-import time, datetime
+import datetime
 
 from addictional_tools import *
-import pytz
-import requests
 from zipfile import ZipFile
-import glob
 import os
-import shutil
 import ijson
 
 headers = {
@@ -17,44 +13,20 @@ headers = {
 }
 
 
-def get_collection_from_db(data_base, collection):
-    client = pymongo.MongoClient('mongodb://localhost:27017')
-    db = client[data_base]
-    return db[collection]
-
-
-# keys_dict = {'fda_drug_ndc': 'product_ndc', 'fda_device_event': 'report_number', 'fda_device': 'k_number',
-#              'fda_device_enforcement': 'recall_number', 'fda_device_recall': 'cfres_id', 'device_classification'
-#              :'regulation_number', 'fda_device_covid19':, 'fda_':, 'fda_':, 'fda_':, 'fda_':, 'fda_':, 'fda_':, 'fda_':, 'fda_':}
-#
-# def upload_fda_data(file, collection, data_key):
-#     data_collection = get_collection_from_db('db', collection)
-#     existed_records = set([x.get(data_key) for x in data_collection.find({}, {data_key: 1, '_id': 0})])
-#     with open(file, 'r', encoding='utf-8') as opened_file:
-#         json_data = json.load(opened_file)
-#         results = json_data.get('results')
-#         for result in results:
-#             if result.get(data_key) not in existed_records:
-#                 data_collection.insert_one(result)
-
-# keys_dict = {'fda_drug_ndc': 'product_ndc', 'fda_device_event': 'report_number', 'fda_device': 'k_number',
-#              'fda_device_enforcement': 'recall_number', 'fda_device_recall': 'cfres_id', 'device_classification'
-#              :'regulation_number', 'fda_device_covid19':, 'fda_':, 'fda_':, 'fda_':, 'fda_':, 'fda_':, 'fda_':, 'fda_':, 'fda_':}
-
 def upload_data_to_db(file, collection):
-    data_collection = get_collection_from_db('db', collection)
+    data_collection = get_collection_from_db('db', collection, client)
     with open(file, 'r', encoding='utf-8') as opened_file:
         for result in ijson.items(opened_file, 'results.item'):
             result['upload_at'] = datetime.datetime.now()
             try:
                 data_collection.insert_one(result)
-            except :
+            except:
                 'Not added'
 
 
 def get_fda_list_new_zip_files():
-    update_collection = get_collection_from_db('db', 'update_collection')
-    fda_all_zip = get_collection_from_db('db', 'fda_files')
+    update_collection = get_collection_from_db('db', 'update_collection', client)
+    fda_all_zip = get_collection_from_db('db', 'fda_files', client)
     all_files_json = get_json_from_request('https://api.fda.gov/download.json')
     files_list = []
     for category in all_files_json.get('results').keys():
@@ -70,22 +42,24 @@ def get_fda_list_new_zip_files():
                 if subcategory != 'drugsfda':
                     update_query = {'name': f'fda_{category}_{subcategory}',
                                     'new_records': 0,
-                                    'total_records': get_collection_from_db('db',f'fda_{category}_{subcategory}').estimated_document_count(),
+                                    'total_records': get_collection_from_db('db',
+                                                                            f'fda_{category}_{subcategory}',
+                                                                            client).estimated_document_count(),
                                     'update_date': datetime.datetime.now()}
                     update_collection.update_one({'name': f'fda_{category}_{subcategory}'}, {"$set": update_query})
     return files_list
 
 
 def upload_fda_data(file_dict):
-    update_collection = get_collection_from_db('db', 'update_collection')
-    fda_all_zip = get_collection_from_db('db', 'fda_files')
+    update_collection = get_collection_from_db('db', 'update_collection', client)
+    fda_all_zip = get_collection_from_db('db', 'fda_files', client)
     file_link = file_dict.get('file_link')
     category = file_dict.get('category')
     subcategory = file_dict.get('subcategory')
-    collection = get_collection_from_db('db', f'fda_{category}_{subcategory}')
+    collection = get_collection_from_db('db', f'fda_{category}_{subcategory}', client)
     last_len_records = collection.estimated_document_count()
     current_directory = os.getcwd()
-    directory_name = 'downloads'
+    directory_name = 'fda'
     path_to_directory = f'{current_directory}/{directory_name}'
     delete_directory(path_to_directory)
     create_directory(current_directory, directory_name)
@@ -111,5 +85,7 @@ def upload_fda_data(file_dict):
 
 if __name__ == '__main__':
     while True:
+        client = pymongo.MongoClient('mongodb://localhost:27017')
         for zip_file in get_fda_list_new_zip_files():
             upload_fda_data(zip_file)
+        client.close()

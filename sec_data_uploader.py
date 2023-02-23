@@ -3,8 +3,8 @@ from addictional_tools import *
 
 
 def upload_sec_tickers_data():
-    update_collection = get_collection_from_db('db', 'update_collection')
-    sec_tickers_data_collection = get_collection_from_db('db', 'sec_data_tickers')
+    update_collection = get_collection_from_db('db', 'update_collection', client)
+    sec_tickers_data_collection = get_collection_from_db('db', 'sec_data_tickers', client)
     last_len_records = sec_tickers_data_collection.estimated_document_count()
     while True:
         try:
@@ -15,6 +15,7 @@ def upload_sec_tickers_data():
             pass
     for company in loc_json:
         cik_str = str(loc_json[company].get('cik_str')).zfill(10)
+        print(cik_str)
         ticker = loc_json[company].get('ticker')
         title = loc_json[company].get('title')
         if sec_tickers_data_collection.find_one({'cik_str': str(loc_json[company].get('cik_str')).zfill(10)}) is None:
@@ -40,10 +41,10 @@ def upload_sec_tickers_data():
 
 
 def upload_sec_fillings_data():
-    sec_data_collection = get_collection_from_db('db', 'sec_data')
-    update_collection = get_collection_from_db('db', 'update_collection')
+    sec_data_collection = get_collection_from_db('db', 'sec_data', client)
+    update_collection = get_collection_from_db('db', 'update_collection', client)
     current_directory = os.getcwd()
-    directory_name = 'downloads'
+    directory_name = 'sec'
     path_to_directory = f'{current_directory}/{directory_name}'
     delete_directory(path_to_directory)
     create_directory(current_directory, directory_name)
@@ -76,7 +77,7 @@ def upload_sec_fillings_data():
         update_collection.update_one({'name': 'sec_data'}, {"$set": update_query})
     else:
         update_collection.insert_one(update_query)
-    npi_collection = get_collection_from_db('db', 'npi_data')
+    npi_collection = get_collection_from_db('db', 'npi_data', client)
     if update_collection.find_one({'name': 'npi_data'}):
         update_collection.update_one({'name': 'npi_data'}, {
             "$set": {'name': 'npi_data', 'new_records': 0, 'total_records': npi_collection.estimated_document_count(),
@@ -89,5 +90,7 @@ def upload_sec_fillings_data():
 
 if __name__ == '__main__':
     while True:
+        client = pymongo.MongoClient('mongodb://localhost:27017')
         upload_sec_tickers_data()
         upload_sec_fillings_data()
+        client.close()

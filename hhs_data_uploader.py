@@ -1,8 +1,4 @@
 import datetime
-import time
-from zipfile import ZipFile
-import os
-import shutil
 from csv import reader
 
 from addictional_tools import *
@@ -170,11 +166,11 @@ headers = [header.lower().replace(' ', '_').replace(')', '_').replace('(', '_') 
 
 
 def upload_hhs_data():
-    update_collection = get_collection_from_db('db', 'update_collection')
-    nppes_data_individual_collection = get_collection_from_db('db', 'nppes_data_individual')
-    nppes_data_entities_collection = get_collection_from_db('db', 'nppes_data_entities')
+    update_collection = get_collection_from_db('db', 'update_collection', client)
+    nppes_data_individual_collection = get_collection_from_db('db', 'nppes_data_individual', client)
+    nppes_data_entities_collection = get_collection_from_db('db', 'nppes_data_entities', client)
     current_directory = os.getcwd()
-    directory_name = 'downloads'
+    directory_name = 'hhs'
     path_to_directory = f'{current_directory}/{directory_name}'
     delete_directory(path_to_directory)
     create_directory(current_directory, directory_name)
@@ -230,4 +226,6 @@ def upload_hhs_data():
 
 if __name__ == '__main__':
     while True:
+        client = pymongo.MongoClient('mongodb://localhost:27017')
         upload_hhs_data()
+        client.close()

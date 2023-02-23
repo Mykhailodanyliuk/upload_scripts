@@ -1,19 +1,11 @@
-import json
 import datetime
-import time
-
-import pymongo
-from zipfile import ZipFile
-import os
-import shutil
-
 from addictional_tools import *
 
 
 def upload_clinical_trials():
-    clinical_trials_collection = get_collection_from_db('db', 'clinical_trials')
-    organizations_collection = get_collection_from_db('db', 'clinical_trials_organizations')
-    update_collection = get_collection_from_db('db', 'update_collection')
+    clinical_trials_collection = get_collection_from_db('db', 'clinical_trials', client)
+    organizations_collection = get_collection_from_db('db', 'clinical_trials_organizations', client)
+    update_collection = get_collection_from_db('db', 'update_collection', client)
     current_directory = os.getcwd()
     directory_name = 'clinical_trials'
     path_to_directory = f'{current_directory}/{directory_name}'
@@ -30,7 +22,7 @@ def upload_clinical_trials():
         # zip_files = [file for file in zip_files if file[-16:-5] not in existed_nct]
         for index, file in enumerate(zip_files):
             print(f'{index} of {l_z}')
-            if not clinical_trials_collection.find_one({'nct_id':file[-16:-5]}):
+            if not clinical_trials_collection.find_one({'nct_id': file[-16:-5]}):
                 zip.extract(file, path=path_to_directory, pwd=None)
                 with open(f'{path_to_directory}/{file}', 'r', encoding='utf-8') as json_file:
                     data = json.load(json_file)
@@ -55,7 +47,8 @@ def upload_clinical_trials():
     else:
         update_collection.insert_one(update_query)
 
-    organizations = list(set([i.get('organization') for i in list(clinical_trials_collection.find({},{'_id':0,'organization':1}))]))
+    organizations = list(
+        set([i.get('organization') for i in list(clinical_trials_collection.find({}, {'_id': 0, 'organization': 1}))]))
     last_len_records = len(organizations)
     for organization in list(organizations):
         list_organization_trials = [trial.get('nct_id') for trial in list(clinical_trials_collection.find(
@@ -78,4 +71,6 @@ def upload_clinical_trials():
 
 if __name__ == '__main__':
     while True:
+        client = pymongo.MongoClient('mongodb://localhost:27017')
         upload_clinical_trials()
+        client.close()
