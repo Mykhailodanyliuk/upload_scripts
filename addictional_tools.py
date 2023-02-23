@@ -1,7 +1,9 @@
+import asyncio
 import json
 import os
 import shutil
 
+import aiohttp
 import pymongo
 import wget
 from zipfile import ZipFile
@@ -89,3 +91,31 @@ def create_directory(path_to_dir, name):
     mypath = f'{path_to_dir}/{name}'
     if not os.path.isdir(mypath):
         os.makedirs(mypath)
+
+
+async def get_page(session, url):
+    while True:
+        try:
+            async with session.get(url, headers=headers) as r:
+                # print(r.status)
+                if r.status == 200:
+                    return await r.json()
+        except asyncio.exceptions.TimeoutError:
+            print('asyncio.exceptions.TimeoutError')
+
+
+async def get_all(session, urls):
+    tasks = []
+    for url in urls:
+        task = asyncio.create_task(get_page(session, url))
+        tasks.append(task)
+    results = await asyncio.gather(*tasks)
+    return results
+
+
+async def get_all_data_urls(urls, limit=5000):
+    timeout = aiohttp.ClientTimeout(total=600)
+    connector = aiohttp.TCPConnector(limit=limit)
+    async with aiohttp.ClientSession(connector=connector, timeout=timeout) as session:
+        data = await get_all(session, urls)
+        return data
